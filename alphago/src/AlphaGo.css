@@ -1,0 +1,83 @@
+#navBar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin: 0 30%;
+  border-bottom: 5px solid black;
+}
+
+#navBarMenu {
+  width: 80%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: white;
+}
+
+.navBarEntry{
+  width: 8%;
+}
+
+.navBarItem {
+  width: 100%;
+  font-size: calc(4.5px + 2vmin);
+  font-family: 'Ebrima';
+  background-color: white;
+  color: #1d2024;
+  border: none;
+  border-radius: 5px;
+  transition-duration: 0.1s;
+}
+
+.navBarItem:hover {
+  background-color: rgb(54, 54, 54);
+  color: white;
+}
+
+.navBarItem:active {
+  font-size: calc(3.5px + 2vmin);
+}
+
+.navBarSignIn {
+  width: 100%;
+  font-size: calc(4.5px + 2vmin);
+  font-family: 'Ebrima';
+  background-color: white;
+  color: black;
+  transition-duration: 0.05s;
+  border: 1px solid rgb(255, 188, 62);
+  border-radius: 10px;
+}
+
+.navBarSignIn:hover {
+  background-color:  rgb(255, 232, 189);
+}
+
+.navBarSignIn:active {
+  font-size: calc(3px + 2vmin);
+  border: 2px solid black;
+}
+
+.navBarFiller {
+  flex-grow: 1;
+  margin: 15px;
+}
+.AlphaGo{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100vh;
+  width: 100vw;
+  background-color: white;
+}
+
+#Goban {
+  display: flex;
+  align-items: center;
+  width: 326px;
+  height: 326px;
+  margin: 10%;
+  border: 2px solid black;
+  border-radius: 4px;
+}
