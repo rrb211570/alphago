@@ -1,17 +1,18 @@
 import './AlphaGo.css';
 import { useEffect, useState } from 'react';
-
-var boardLength = 9;
-let placedStones = [];
-let traversedStones = [];
-let turn = 'white';
-let stoneGroups = new Map();
-let adjMap = new Map();
+import { stoneExists, placeable } from './data/gameInteraction/modifiers/placement.js';
+import { swapTurn, updatePlacedStones, deletePlacedStone } from './store/reducers/gamePlaySlice.js'
+import { alignColors } from './data/gameInteraction/modifiers/hover.js';
+import { store } from './store/store.js';
+// import turn, boardLength from store
 
 function AlphaGo() {
   const [clickSquares, setClickSquares] = useState([<div id='filler' key='1'></div>]);
 
   useEffect(() => {
+    let boardLength = store.getState().gamePlay.boardLength;
+    console.log(boardLength);
+    console.log(store.getState().gamePlay)
     let clickSquares = [];
     for (let i = 0; i < boardLength; ++i) {
       let clickRow = [];
@@ -28,8 +29,9 @@ function AlphaGo() {
   }, [])
 
   const showStone = (e) => {
+    let turn = store.getState().gamePlay.turn;
     let clickSquareID = e.currentTarget.id;
-    let indices = /^.*(\d+).*(\d+)$/.exec(clickSquareID).slice(1, 3).join('_');;
+    let indices = /^.*(\d+).*(\d+)$/.exec(clickSquareID).slice(1, 3).join('_');
     if (!stoneExists(indices)) {
       if (turn == 'white') document.querySelector('#' + clickSquareID + ' use').setAttribute('href', '#plain-white-14.5-2');
       else document.querySelector('#' + clickSquareID + ' use').setAttribute('href', '#plain-black-14.5-3');
@@ -46,175 +48,26 @@ function AlphaGo() {
   }
 
   const placeStone = (e) => {
+    let placedStones = [...store.getState().gamePlay.placedStones];
     let clickSquareID = e.currentTarget.id;
     let indices = /^.*(\d+).*(\d+)$/.exec(clickSquareID).slice(1, 3).join('_');
-    traversedStones = [];
     if (!stoneExists(indices)) {
       alignColors(clickSquareID);
       // check placeable
       placedStones.push(indices);
-      placeable2(clickSquareID);
+      store.dispatch(updatePlacedStones({ placedStones }));
       if (placeable(clickSquareID)) {
-        document.querySelector('#' + clickSquareID + ' svg').style.display = 'block';
+        console.log(store.getState().gamePlay.adjMap);
+        document.querySelector('#' + clickSquareID + ' svg').display = 'block';
         document.querySelector('#' + clickSquareID + ' svg').style.opacity = '1';
         console.log('placed');
-        swapTurn();
+        store.dispatch(swapTurn());
       } else {
-        placedStones.pop();
+        store.dispatch(deletePlacedStone({ indices }));
+        document.querySelector('#' + e.currentTarget.id + ' svg').style.display = 'none';
         console.log('not placeable');
       }
     }
-    console.log(placedStones);
-  }
-
-  // 1 adjacent open space ______________________ DONE
-  let placeable = (indices) => {
-    let [discard, x, y] = /^.*(\d+).*(\d+)$/.exec(indices);
-    console.log('placeable: ' + x + ' ' + y);
-    if (openSpace(parseInt(x, 10), parseInt(y, 10), 0)) return true;
-    // check capturable
-  }
-
-  let openSpace = (x, y) => {
-    if (stoneTraversed(x + '_' + y)) return false;
-    console.log('openSpace: ' + x + ' ' + y);
-    if (x < 0 || y < 0 || x > 8 || y > 8) return false;
-    traversedStones.push(x + '_' + y);
-    if (!stoneExists(x + '_' + y)) return true;
-    else {
-      if ((sameStone(x, y, x - 1, y) && !stoneTraversed(x - 1 + '_' + y)) && openSpace(x - 1, y)) return true;
-      if ((sameStone(x, y, x + 1, y) && !stoneTraversed(x + 1 + '_' + y)) && openSpace(x + 1, y)) return true;
-      if ((sameStone(x, y, x, y - 1) && !stoneTraversed(x + '_' + y - 1)) && openSpace(x, y - 1)) return true;
-      if ((sameStone(x, y, x, y + 1) && !stoneTraversed(x + '_' + y + 1)) && openSpace(x, y + 1)) return true;
-    }
-    return false;
-  }
-
-  let sameStone = (x1, y1, x2, y2) => {
-    if (x1 < 0 || y1 < 0 || x1 > 8 || y1 > 8) return false;
-    if (x2 < 0 || y2 < 0 || x2 > 8 || y2 > 8) return false;
-    if (!stoneExists(x2 + '_' + y2)) return true;
-    let currentStoneState = document.querySelector('#clickSquare_' + x1 + '_' + y1 + ' use').getAttribute('href');
-    let adjacentStoneState = document.querySelector('#clickSquare_' + x2 + '_' + y2 + ' use').getAttribute('href');
-    return currentStoneState == adjacentStoneState;
-  }
-
-  let stoneExists = (indices) => {
-    if (placedStones.find((elem) => elem == indices) == undefined) return false;
-    return true;
-  }
-
-  let stoneTraversed = (indices) => {
-    if (traversedStones.find((elem) => elem == indices) == undefined) return false;
-    return true;
-  }
-
-  let placeable2 = (clickSquareID) => {
-    let indices = /^.*(\d+.*\d+)$/.exec(clickSquareID)[1];
-    console.log('placeable2: ' + indices);
-    let groups = adjMap.get(indices);
-    console.log(groups);
-    let groupNumber;
-    if (groups != null) {
-      let sameColorGroups = getSameColorGroups(groups);
-      if (groups.length == 4) {
-        if (sameColorGroups.length > 0) {
-          for (let sameColorGroup of sameColorGroups) {
-            if (exposedOrCapturable(sameColorGroup)) { // also does 'capturing'; 'capturing' adds new adj
-              groupNumber = consolidate(indices);
-              updateAdj(indices, groupNumber);
-              adjMap.delete(indices);
-              return true;
-            }
-          }
-        }
-        return false;
-      } else {
-        if (sameColorGroups.length == 0) groupNumber = makeNewStoneGroup(indices);
-        else groupNumber = consolidate(indices);
-      }
-    } else {
-      groupNumber = makeNewStoneGroup(indices);
-    }
-    updateAdj(indices, groupNumber);
-    adjMap.delete(indices);
-    return true;
-  }
-
-  let getSameColorGroups = (groups) => {
-    groups.filter((group) => {
-      let stoneID = stoneGroups.get(group)[0];
-      return sameColor(stoneID);
-
-    });
-  }
-
-  let sameColor = (stoneID) => {
-    let color = document.querySelector('#clickSquareID_' + stoneID + ' use').getAttribute('href');
-    if (color == '#plain-black-14.5-3' && turn == 'black') return true;
-    else if (color == '#plain-white-14.5-2' && turn == 'white') return true;
-    else return false;
-  }
-
-  let consolidate = (indices) => { // consolidate sameColorGroups in adj and stoneGroups
-    let [x, y] = indices.split('_').map((val) => parseInt(val, 10));
-    let adjacentGroups = getSameColorAdjacentGroups(indices);
-    if (x - 1 > -1) {
-      if (!adjMap.has((x - 1) + '_' + y)) adjMap.set((x - 1) + '_' + y, [groupIndex]);
-      else if (!adjMap.get(x - 1 + '_' + y).includes(groupIndex)) adjMap.set((x - 1) + '_' + y, [adjMap.get((x - 1) + '_' + y), groupIndex]);
-    }
-    if (x + 1 < 9) {
-      if (!adjMap.has((x + 1) + '_' + y)) adjMap.set((x + 1) + '_' + y, [groupIndex]);
-      else if (!adjMap.get((x + 1) + '_' + y).includes(groupIndex)) adjMap.set((x + 1) + '_' + y, [adjMap.get((x + 1) + '_' + y), groupIndex]);
-    }
-    if (y - 1 > -1) {
-      if (!adjMap.has(x + '_' + (y - 1))) adjMap.set(x + '_' + (y - 1), [groupIndex]);
-      else if (!adjMap.get(x + '_' + (y - 1)).includes(groupIndex)) adjMap.set(x + '_' + (y - 1), [adjMap.get(x + '_' + (y - 1)), groupIndex]);
-    }
-    if (y + 1 < 9) {
-      if (!adjMap.has(x + '_' + (y + 1))) adjMap.set(x + '_' + (y + 1), [groupIndex]);
-      else if (!adjMap.get(x + '_' + (y + 1)).includes(groupIndex)) adjMap.set(x + '_' + (y + 1), [adjMap.get(x + '_' + (y + 1)), groupIndex]);
-    }
-  }
-
-  let getSameColorAdjacentGroups = (x, y) => {
-    return adjMap.get(indices).filter((group)=>sameColor(stoneGroups.get(group)[0]));
-  }
-
-  let updateAdj = (indices, groupNumber) => {
-    let [x, y] = indices.split('_').map((val) => parseInt(val, 10));
-    // if no stone found; also append
-    setAdj(x - 1 + '_' + y, groupNumber); // update adj
-    setAdj(x + 1 + '_' + y, groupNumber);
-    setAdj(x - 1 + '_' + y - 1, groupNumber);
-    setAdj(x - 1 + '_' + y + 1, groupNumber);
-  }
-
-  let setAdj = (indices, groupNumber) => {
-    if (placedStones.find(indices) == undefined) {
-      if (!adjMap.has(indices)) {
-        adjMap.set(indices, groupNumber);
-      } else if (!adjMap.get(indices).includes(groupNumber)) {
-        adjMap.set(indices, [...adjMap.get(indices), groupNumber]);
-      }
-    }
-  }
-
-  let makeNewStoneGroup = (indices) => {
-    let groupNumber = Math.max(...stoneGroups.keys()) + 1;
-    if (groupNumber == -Infinity) groupNumber = 1;
-    stoneGroups.set(groupNumber, [indices]);
-    return groupNumber;
-  }
-
-  let alignColors = (clickSquareID) => {
-    if (turn == 'white') document.querySelector('#' + clickSquareID + ' use').setAttribute('href', '#plain-white-14.5-2');
-    else document.querySelector('#' + clickSquareID + ' use').setAttribute('href', '#plain-black-14.5-3');
-  }
-
-  let swapTurn = () => {
-    if (turn == 'white') turn = 'black';
-    else turn = 'white';
   }
 
   return (
@@ -316,15 +169,6 @@ function AlphaGo() {
               <text x="305" y="280" fontSize="15px" fontWeight="bold" fill="rgba(0, 0, 0, 0.75)">1</text>
             </g>
             <g className="shadow-layer"></g>
-            <g id="plain-black-14.5-187" className="stone">
-              <circle stroke="hsl(8, 7%, 20%)" strokeWidth="0.7px" cx="43" cy="43" r="14.1375" shapeRendering="geometricPrecision" fill="url(#plain-black-14.5-187-gradient)"></circle>
-              <defs>
-                <linearGradient x1="0.40" y1="0.10" x2="0.70" y2="0.70" id="plain-black-14.5-187-gradient">
-                  <stop offset="0%" stopColor="hsl(8, 7%, 27%)"></stop>
-                  <stop offset="100%" stopColor="hsl(8, 7%, 12%)"></stop>
-                </linearGradient>
-              </defs>
-            </g>
             <g className="grid"></g>
           </svg>
 
