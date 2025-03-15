@@ -1,8 +1,7 @@
 import './AlphaGo.css';
 import { useEffect, useState } from 'react';
-import { stoneExists, placeable } from './data/gameInteraction/modifiers/placement.js';
+import placeable from './data/gameInteraction/placement/placement.js';
 import { swapTurn, updatePlacedStones, deletePlacedStone } from './store/reducers/gamePlaySlice.js'
-import { alignColors } from './data/gameInteraction/modifiers/hover.js';
 import { store } from './store/store.js';
 // import turn, boardLength from store
 
@@ -57,7 +56,6 @@ function AlphaGo() {
       placedStones.push(indices);
       store.dispatch(updatePlacedStones({ placedStones }));
       if (placeable(clickSquareID)) {
-        console.log(store.getState().gamePlay.adjMap);
         document.querySelector('#' + clickSquareID + ' svg').display = 'block';
         document.querySelector('#' + clickSquareID + ' svg').style.opacity = '1';
         console.log('placed');
@@ -68,6 +66,16 @@ function AlphaGo() {
         console.log('not placeable');
       }
     }
+  }
+
+  let alignColors = (clickSquareID) => {
+    if (store.getState().gamePlay.turn == 'white') document.querySelector('#' + clickSquareID + ' use').setAttribute('href', '#plain-white-14.5-2');
+    else document.querySelector('#' + clickSquareID + ' use').setAttribute('href', '#plain-black-14.5-3');
+  }
+
+  let stoneExists = (indices) => {
+    if (store.getState().gamePlay.placedStones.find((elem) => elem == indices) == undefined) return false;
+    return true;
   }
 
   return (

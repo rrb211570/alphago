@@ -1,5 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
-import {StoneGroups, AdjMap} from '../../data/gameInteraction/gameInteraction.js';
+import { StoneGroups, AdjMap } from '../../data/gameInteraction/gameInteraction.js';
 
 export const gamePlaySlice = createSlice({
     name: 'gamePlay',
@@ -26,10 +26,10 @@ export const gamePlaySlice = createSlice({
             state.stoneGroups = state.stoneGroups;
             state.adjMap = state.adjMap;
         },
-        deletePlacedStone(state, action){
+        deletePlacedStone(state, action) {
             state.turn = state.turn;
             state.boardLength = state.boardLength;
-            state.placedStones = state.placedStones.filter((stone)=>stone!=action.payload.indices);
+            state.placedStones = state.placedStones.filter((stone) => stone != action.payload.indices);
             state.stoneGroups = state.stoneGroups;
             state.adjMap = state.adjMap;
         },
@@ -45,9 +45,11 @@ export const gamePlaySlice = createSlice({
             state.boardLength = state.boardLength;
             state.placedStones = state.placedStones;
             state.stoneGroups = state.stoneGroups;
-            state.adjMap = action.payload.adjMap;
+            let adjMap = state.adjMap;
+            adjMap.deleteAdj(action.payload.indices);
+            state.adjMap = adjMap;
         },
-        updateStoneGroups(state, action){
+        updateStoneGroups(state, action) {
             state.turn = state.turn;
             state.boardLength = state.boardLength;
             state.placedStones = state.placedStones;

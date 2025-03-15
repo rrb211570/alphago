@@ -22,6 +22,7 @@ class StoneGroups {
     }
     getStoneGroup(stoneGroup) {
         if (stoneGroup === null || stoneGroup === undefined) throw 'StoneGroups:getStoneGroup: stoneGroup is null/undefined';
+        console.log(stoneGroup);
         return this.#stoneGroups.get(stoneGroup);
     }
     deleteStoneGroup(stoneGroup) {
