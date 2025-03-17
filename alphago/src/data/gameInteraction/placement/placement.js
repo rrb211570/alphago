@@ -1,40 +1,40 @@
 import { store } from "../../../store/store.js";
 import { updateAdj, deleteAdj } from '../../../store/reducers/gamePlaySlice.js'
-import { getAllNeighborIndices, getNeighborStones, makeAndReturnNewStoneGroup, getSameColorNeighborGroups } from "./modifiers/helpers.js";
+import { getAllNeighborIndices, getNeighborStones, makeNewStoneGroup, getSameColorNeighborGroups, getNeighborGroups } from "./modifiers/helpers.js";
 import capturable from "./modifiers/capturable.js";
-import consolidateAndReturnPrimaryStoneGroup from "./modifiers/consolidate.js";
+import consolidate from "./modifiers/consolidate.js";
 
 let placeable = (rootIndices) => {
   console.log('placeable:: ' + rootIndices);
-  // open space
-  if (openSpace(rootIndices)) {
+  if (openSpace(rootIndices)) { // open space
     console.log('open space');
+    capturable(rootIndices); // capture if possible
     if (hasSameColorNeighborGroups(rootIndices)) {
       console.log('placeable:: open space, consolidate');
-      addNeighborIndicesOfPlacedStone(rootIndices, consolidateAndReturnPrimaryStoneGroup(rootIndices));
+      consolidate(rootIndices);
     } else {
       console.log('placeable:: open space, newStoneGroup');
-      addNeighborIndicesOfPlacedStone(rootIndices, makeAndReturnNewStoneGroup(rootIndices));
+      makeNewStoneGroup(rootIndices);
     }
-  } else if (hasSameColorNeighborGroups(rootIndices)) { // surrounded, check exposed
-    console.log('surrounded');
-    if (hasExposedNeighbor) {
-      console.log('placeable:: surrounded, consolidate');
-      addNeighborIndicesOfPlacedStone(rootIndices, consolidateAndReturnPrimaryStoneGroup(rootIndices));
-    }
-  } else if (capturable(rootIndices)) { // surrounded, check capturable; capturable() does capturing if possible
-    console.log('capturable');
-    if (hasSameColorNeighborGroups(rootIndices)) {
-      console.log('placeable:: surrounded, capturable, consolidate');
-      addNeighborIndicesOfPlacedStone(rootIndices, consolidateAndReturnPrimaryStoneGroup(rootIndices));
+  } else { // surrounded
+    if (capturable(rootIndices)) { // capture if possible
+      console.log('capturable'); 
+      if (hasSameColorNeighborGroups(rootIndices)) {
+        console.log('placeable:: surrounded, capturable, consolidate');
+        consolidate(rootIndices);
+      } else {
+        console.log('placeable:: surrounded, capturable, newStoneGroup');
+        makeNewStoneGroup(rootIndices);
+      }
+    } else if (hasExposedNeighbor(rootIndices)) {
+      console.log('placeable:: surrounded, exposed, consolidate');
+      consolidate(rootIndices);
     } else {
-      console.log('placeable:: surrounded, capturable, newStoneGroup');
-      addNeighborIndicesOfPlacedStone(rootIndices, makeAndReturnNewStoneGroup(rootIndices));
+      console.log('placeable:: surrounded, not exposed or capturable');
+      return false;
     }
-  } else {
-    console.log('placeable:: surrounded, not exposed or capturable');
-    return false;
   }
+  addNeighborIndicesOfPlacedStone(rootIndices);
   if (store.getState().gamePlay.adjMap.hasAdj(rootIndices)) store.dispatch(deleteAdj({ indices: rootIndices }));
   return true;
 }
@@ -61,13 +61,14 @@ let exposed = (sameColorNeighborGroup, rootIndices) => {
   return false;
 }
 
-let addNeighborIndicesOfPlacedStone = (rootIndices, groupNumber) => {
+let addNeighborIndicesOfPlacedStone = (rootIndices) => {
   let placedStones = store.getState().gamePlay.placedStones;
   let adjMap = store.getState().gamePlay.adjMap;
   for (let neighborIndices of getAllNeighborIndices(rootIndices)) {
     if (!placedStones.includes(neighborIndices)) {
-      if (!adjMap.hasAdj(neighborIndices)) adjMap.setAdj(neighborIndices, [groupNumber])
-      else if (!adjMap.getAdj(neighborIndices).includes(groupNumber)) adjMap.setAdj(neighborIndices, [...adjMap.getAdj(neighborIndices), groupNumber])
+      let neighborGroups = getNeighborGroups(neighborIndices);
+      console.log(neighborGroups)
+      if(neighborGroups.length>0) adjMap.setAdj(neighborIndices, neighborGroups);
     }
   }
   store.dispatch(updateAdj({ adjMap }));

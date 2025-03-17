@@ -2,7 +2,7 @@ import { store } from "../../../../store/store";
 import { updateAdj, updateStoneGroups } from "../../../../store/reducers/gamePlaySlice";
 import { getSameColorNeighborGroups } from "./helpers";
 
-let consolidateAndReturnPrimaryStoneGroup = (rootIndices) => {
+let consolidate = (rootIndices) => {
     console.log('consolidate ' + rootIndices);
     let stoneGroups = store.getState().gamePlay.stoneGroups;
 
@@ -20,7 +20,6 @@ let consolidateAndReturnPrimaryStoneGroup = (rootIndices) => {
 
     stoneGroups.setStoneGroup(primaryGroupNumber, [...consolidatedStones, rootIndices]);
     store.dispatch(updateStoneGroups({ stoneGroups }));
-    return primaryGroupNumber;
 }
 
 let consolidateAdjMap = (groupNumber, primaryGroupNumber) => {
@@ -35,4 +34,4 @@ let consolidateAdjMap = (groupNumber, primaryGroupNumber) => {
     store.dispatch(updateAdj({ adjMap }));
 }
 
-export default consolidateAndReturnPrimaryStoneGroup;
+export default consolidate;

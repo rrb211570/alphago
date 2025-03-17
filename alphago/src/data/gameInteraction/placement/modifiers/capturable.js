@@ -8,7 +8,10 @@ let capturable = (capturingStoneIndices) => {
   if (orphanedStoneGroupNumbers.length > 0) { // has one or more group (to be captured)
     for (let orphanedStoneGroupNumber of orphanedStoneGroupNumbers) {
       let deadStones = stoneGroups.getStones(orphanedStoneGroupNumber);
+      console.log(deadStones);
       deleteDeadStonesFromStoneGroupsAndPlacedStones(orphanedStoneGroupNumber, deadStones);
+      console.log(stoneGroups);
+      console.log(store.getState().gamePlay.placedStones);
       replaceDeadStonesWithAdj(deadStones, capturingStoneIndices);
     }
     return true;
@@ -54,7 +57,7 @@ let replaceDeadStonesWithAdj = (deadStones, capturingStoneIndices) => {
     if (adjArr.length != 0) adjMap.setAdj(deadStone, adjArr); // we could have a deadStone surrounded by deadStones, so we check for that
     document.querySelector('#clickSquare_' + deadStone + ' svg').style.display = 'none';
     document.querySelector('#clickSquare_' + deadStone + ' svg').style.opacity = '0.7';
-    adjMap.setAdj(deadStone, adjArr);
+    if(adjArr.length>0) adjMap.setAdj(deadStone, adjArr);
   }
   store.dispatch(updateAdj({ adjMap }));
 }

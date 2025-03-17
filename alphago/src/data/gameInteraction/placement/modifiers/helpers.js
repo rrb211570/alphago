@@ -22,16 +22,15 @@ let getNeighborStones = (rootIndices) => {
     return neighborStones;
 }
 
-let makeAndReturnNewStoneGroup = (indices) => {
+let makeNewStoneGroup = (indices) => {
     let stoneGroups = store.getState().gamePlay.stoneGroups;
     let newGroupNumber = Math.max(...stoneGroups.getStoneGroupKeys()) + 1;
     if (newGroupNumber == -Infinity) newGroupNumber = 1;
     stoneGroups.setStoneGroup(newGroupNumber, [indices]);
     store.dispatch(updateStoneGroups({ stoneGroups }));
-    return newGroupNumber;
 }
 
-let getSameColorNeighborGroups = (rootIndices) => {
+let getNeighborGroups = (rootIndices)=>{
     let stoneGroups = store.getState().gamePlay.stoneGroups;
     let neighborGroups = [];
     for (let neighborIndices of getAllNeighborIndices(rootIndices)) {
@@ -39,7 +38,12 @@ let getSameColorNeighborGroups = (rootIndices) => {
             if (stones.includes(neighborIndices) && !neighborGroups.includes(stoneGroupNumber)) neighborGroups.push(stoneGroupNumber);
         }
     }
-    return neighborGroups.filter((group) => sameColorAsTurn(stoneGroups.getStones(group)[0]));
+    return neighborGroups;
+}
+
+let getSameColorNeighborGroups = (rootIndices) => {
+    let stoneGroups = store.getState().gamePlay.stoneGroups;
+    return getNeighborGroups(rootIndices).filter((group) => sameColorAsTurn(stoneGroups.getStones(group)[0]));
 }
 
 let sameColorAsTurn = (stoneID) => {
@@ -60,4 +64,4 @@ let getStoneGroupFromStone = (indices) => {
     throw 'getStoneGroup:: stoneGroups does not contain ' + indices;
   }
 
-export { getAllNeighborIndices, getNeighborStones, makeAndReturnNewStoneGroup, getSameColorNeighborGroups, getStoneGroupFromStone };
+export { getAllNeighborIndices, getNeighborStones, makeNewStoneGroup, getNeighborGroups, getSameColorNeighborGroups, getStoneGroupFromStone };
