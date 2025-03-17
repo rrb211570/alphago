@@ -20,13 +20,12 @@ class StoneGroups {
         if (stoneGroup === null || stoneGroup === undefined) throw 'StoneGroups:hasStoneGroup: stoneGroup is null/undefined';
         return this.#stoneGroups.has(stoneGroup);
     }
-    getStoneGroup(stoneGroup) {
+    getStones(stoneGroup) {
         if (stoneGroup === null || stoneGroup === undefined) throw 'StoneGroups:getStoneGroup: stoneGroup is null/undefined';
-        console.log(stoneGroup);
         return this.#stoneGroups.get(stoneGroup);
     }
     deleteStoneGroup(stoneGroup) {
-        if (stoneGroup === null || stoneGroup === undefined) throw 'StoneGroups:getStoneGroup: stoneGroup is null/undefined';
+        if (stoneGroup === null || stoneGroup === undefined) throw 'StoneGroups:deleteStoneGroup: stoneGroup is null/undefined';
         this.#stoneGroups.delete(stoneGroup);
     }
     getStoneGroupKeys() {
@@ -63,11 +62,11 @@ class AdjMap {
         return this.#adjMap.has(indices);
     }
     getAdj(indices) {
-        if (indices === null || indices === undefined) throw 'AdjMap:getAdjMap: indices is null/undefined';
+        if (indices === null || indices === undefined) throw 'AdjMap:getAdj: indices is null/undefined';
         return this.#adjMap.get(indices);
     }
     deleteAdj(indices) {
-        if (indices === null || indices === undefined) throw 'AdjMap:getAdjMap: indices is null/undefined';
+        if (indices === null || indices === undefined) throw 'AdjMap:deleteAdj: indices is null/undefined';
         this.#adjMap.delete(indices);
     }
     getAdjKeys(){

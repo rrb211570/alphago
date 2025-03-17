@@ -1,55 +1,62 @@
 import { store } from "../../../../store/store";
-import { deletePlacedStone, updateAdj, updateStoneGroups } from "../../../../store/reducers/gamePlaySlice";
-import { getNeighborIndices } from "./helpers";
+import { deleteStoneGroup, deletePlacedStone, updateAdj } from "../../../../store/reducers/gamePlaySlice";
+import { getNeighborStones, getStoneGroupFromStone } from "./helpers";
 
-
-let capturable = (rootIndices) => {
+let capturable = (capturingStoneIndices) => {
   let stoneGroups = store.getState().gamePlay.stoneGroups;
-  let adjMap = store.getState().gamePlay.adjMap;
-  let groupNumbers = [...stoneGroups.getStoneGroupKeys()];
-  for (let [indices, adjArr] of adjMap.getEntries()) {
-    if (indices == rootIndices) continue;
-    for (let groupNumber of adjArr) {
-      if (groupNumbers.includes(groupNumber)) groupNumbers.splice(groupNumbers.find(groupNumber), 1);
+  let orphanedStoneGroupNumbers = getOrphanedStoneGroupNumber(capturingStoneIndices);
+  if (orphanedStoneGroupNumbers.length > 0) { // has one or more group (to be captured)
+    for (let orphanedStoneGroupNumber of orphanedStoneGroupNumbers) {
+      let deadStones = stoneGroups.getStones(orphanedStoneGroupNumber);
+      deleteDeadStonesFromStoneGroupsAndPlacedStones(orphanedStoneGroupNumber, deadStones);
+      replaceDeadStonesWithAdj(deadStones, capturingStoneIndices);
     }
-  }
-  if (groupNumbers.length > 0) { // has one group (to be captured)
-    console.log(groupNumbers);
-    let capturedStones = stoneGroups.getStoneGroup(groupNumbers[0]);
-    stoneGroups.deleteStoneGroup(groupNumbers[0]);
-    store.dispatch(updateStoneGroups({ stoneGroups }));
-    // remove capturedStones from placedStones
-    for (let stoneID of capturedStones) store.dispatch(deletePlacedStone({ stoneID }));
-
-    // create adj for each capturedStone index (consider rootIndices)
-    replaceCaptureWithAdj(capturedStones, rootIndices);
     return true;
   }
   return false;
 }
 
-let replaceCaptureWithAdj = (capturedStones, rootIndices) => {
-  let placedStones = store.getState().gamePlay.placedStones;
+// 
+let getOrphanedStoneGroupNumber = (capturingStoneIndices) => {
   let adjMap = store.getState().gamePlay.adjMap;
-  let groupArr = [];
-  for (let stoneID of capturedStones) {
-    for (let adjIndices of getNeighborIndices(stoneID)) {
-      if (placedStones.includes(adjIndices)) {
-        let groupNumber = getStoneGroupFromStone(adjIndices);
-        if (!groupArr.includes(groupNumber)) groupArr.push(groupNumber);
-      }
+  let stoneGroupNumbers = [...store.getState().gamePlay.stoneGroups.getStoneGroupKeys()];
+  let orphanedStoneGroupNumbers = [];
+  for (let stoneGroupNumber of stoneGroupNumbers) {
+    let totalExposedAdj = 0;
+    for (let [indices, adjArr] of adjMap.getAdjEntries()) {
+      if (adjArr.includes(stoneGroupNumber) && indices != capturingStoneIndices) totalExposedAdj++;
     }
-    adjMap.setAdj(stoneID, groupArr);
+    if (totalExposedAdj == 0) orphanedStoneGroupNumbers.push(stoneGroupNumber);
   }
-  store.dispatch(updateAdj({ adjMap }));
+  return orphanedStoneGroupNumbers;
 }
 
-let getStoneGroupFromStone = (indices) => {
-  let stoneGroups = store.getState().gamePlay.stoneGroups;
-  for (let [groupNumber, stoneArr] of stoneGroups.getStoneGroupEntries()) {
-    if (stoneArr.includes(indices)) return groupNumber;
+let deleteDeadStonesFromStoneGroupsAndPlacedStones = (orphanedStoneGroupNumber, deadStones) => {
+  store.dispatch(deleteStoneGroup({ stoneGroup: orphanedStoneGroupNumber }));
+  for (let stoneID of deadStones) store.dispatch(deletePlacedStone({ indices: stoneID }));
+}
+
+let replaceDeadStonesWithAdj = (deadStones, capturingStoneIndices) => {
+  let adjMap = store.getState().gamePlay.adjMap;
+
+  for (let deadStone of deadStones) {
+    console.log(deadStone);
+    let adjArr = [];
+    let neighborStones = getNeighborStones(deadStone);
+    document.querySelector('#clickSquare_' + deadStone + ' svg').style.display = 'none';
+    document.querySelector('#clickSquare_' + deadStone + ' svg').style.opacity = '0.7';
+    if(neighborStones.includes(capturingStoneIndices)) continue; // we ignore this case, because capturingStoneIndices has not been updated yet in stoneGroups & adjMap
+    
+    for (let neighborStone of neighborStones) {
+      let groupNumber = getStoneGroupFromStone(neighborStone);
+      if (!adjArr.includes(groupNumber)) adjArr.push(groupNumber);
+    }
+    if (adjArr.length != 0) adjMap.setAdj(deadStone, adjArr); // we could have a deadStone surrounded by deadStones, so we check for that
+    document.querySelector('#clickSquare_' + deadStone + ' svg').style.display = 'none';
+    document.querySelector('#clickSquare_' + deadStone + ' svg').style.opacity = '0.7';
+    adjMap.setAdj(deadStone, adjArr);
   }
-  throw 'getStoneGroup:: stoneGroups does not contain ' + indices;
+  store.dispatch(updateAdj({ adjMap }));
 }
 
 export default capturable;

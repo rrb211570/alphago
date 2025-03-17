@@ -1,7 +1,7 @@
 import './AlphaGo.css';
 import { useEffect, useState } from 'react';
 import placeable from './data/gameInteraction/placement/placement.js';
-import { swapTurn, updatePlacedStones, deletePlacedStone } from './store/reducers/gamePlaySlice.js'
+import { swapTurn, addPlacedStone, deletePlacedStone } from './store/reducers/gamePlaySlice.js'
 import { store } from './store/store.js';
 // import turn, boardLength from store
 
@@ -47,30 +47,31 @@ function AlphaGo() {
   }
 
   const placeStone = (e) => {
-    let placedStones = [...store.getState().gamePlay.placedStones];
-    let clickSquareID = e.currentTarget.id;
-    let indices = /^.*(\d+).*(\d+)$/.exec(clickSquareID).slice(1, 3).join('_');
-    if (!stoneExists(indices)) {
-      alignColors(clickSquareID);
-      // check placeable
-      placedStones.push(indices);
-      store.dispatch(updatePlacedStones({ placedStones }));
-      if (placeable(clickSquareID)) {
-        document.querySelector('#' + clickSquareID + ' svg').display = 'block';
-        document.querySelector('#' + clickSquareID + ' svg').style.opacity = '1';
-        console.log('placed');
+    let rootIndices = /^.*(\d+).*(\d+)$/.exec(e.currentTarget.id).slice(1, 3).join('_');
+    if (!stoneExists(rootIndices)) {
+      alignColors(rootIndices);
+      store.dispatch(addPlacedStone({ indices: rootIndices })); // very important for placeable()'s logic - We remove afterwards if not placeable
+      if (placeable(rootIndices)) {
+        document.querySelector('#clickSquare_' + rootIndices + ' svg').display = 'block';
+        document.querySelector('#clickSquare_' + rootIndices + ' svg').style.opacity = '1';
         store.dispatch(swapTurn());
+        console.log('placed');
       } else {
-        store.dispatch(deletePlacedStone({ indices }));
-        document.querySelector('#' + e.currentTarget.id + ' svg').style.display = 'none';
+        console.log(rootIndices);
+        store.dispatch(deletePlacedStone({ indices: rootIndices }));
+        document.querySelector('#clickSquare_' + rootIndices + ' svg').style.display = 'none';
+        document.querySelector('#clickSquare_' + rootIndices + ' svg').style.opacity = '0.7';
         console.log('not placeable');
       }
+      console.log(store.getState().gamePlay.stoneGroups);
+      console.log(store.getState().gamePlay.adjMap);
+      console.log(store.getState().gamePlay.placedStones);
     }
   }
 
-  let alignColors = (clickSquareID) => {
-    if (store.getState().gamePlay.turn == 'white') document.querySelector('#' + clickSquareID + ' use').setAttribute('href', '#plain-white-14.5-2');
-    else document.querySelector('#' + clickSquareID + ' use').setAttribute('href', '#plain-black-14.5-3');
+  let alignColors = (rootIndices) => {
+    if (store.getState().gamePlay.turn == 'white') document.querySelector('#clickSquare_' + rootIndices + ' use').setAttribute('href', '#plain-white-14.5-2');
+    else document.querySelector('#clickSquare_' + rootIndices + ' use').setAttribute('href', '#plain-black-14.5-3');
   }
 
   let stoneExists = (indices) => {

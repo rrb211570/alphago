@@ -19,10 +19,10 @@ export const gamePlaySlice = createSlice({
             state.stoneGroups = state.stoneGroups;
             state.adjMap = state.adjMap;
         },
-        updatePlacedStones(state, action) {
+        addPlacedStone(state, action) {
             state.turn = state.turn;
             state.boardLength = state.boardLength;
-            state.placedStones = action.payload.placedStones;
+            state.placedStones = [...state.placedStones, action.payload.indices];
             state.stoneGroups = state.stoneGroups;
             state.adjMap = state.adjMap;
         },
@@ -49,6 +49,15 @@ export const gamePlaySlice = createSlice({
             adjMap.deleteAdj(action.payload.indices);
             state.adjMap = adjMap;
         },
+        deleteStoneGroup(state, action){
+            state.turn = state.turn;
+            state.boardLength = state.boardLength;
+            state.placedStones = state.placedStones;
+            let stoneGroups = state.stoneGroups;
+            stoneGroups.deleteStoneGroup(action.payload.stoneGroup);
+            state.stoneGroups = stoneGroups;
+            state.adjMap = state.adjMap;
+        },
         updateStoneGroups(state, action) {
             state.turn = state.turn;
             state.boardLength = state.boardLength;
@@ -59,7 +68,7 @@ export const gamePlaySlice = createSlice({
     }
 });
 
-export const { swapTurn, updatePlacedStones, deletePlacedStone, updateAdj, deleteAdj, updateStoneGroups } = gamePlaySlice.actions;
+export const { swapTurn, addPlacedStone, deletePlacedStone, updateAdj, deleteAdj, deleteStoneGroup, updateStoneGroups } = gamePlaySlice.actions;
 export const getTurn = state => state.gamePlay.turn;
 export const getBoardLength = state => state.gamePlay.boardLength;
 export const getPlacedStones = state => state.gamePlay.placedStones;
